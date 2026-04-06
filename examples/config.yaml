@@ -1,0 +1,29 @@
+auth_server_host: logon.turtle-server-eu.kz
+auth_server_port: 3724
+listen_host: "1.2.3.4"
+auth_listen_port: 3724
+
+realms:
+  - name: Ambershire
+    icon: 6
+    flags: 64
+    population: 6.0
+    category: 1
+    real_addr: "54.38.150.2:8090"
+    proxy_port: 8090
+
+  - name: Nordanaar
+    icon: 6
+    flags: 0
+    population: 6.0
+    category: 1
+    real_addr: "51.38.72.24:8090"
+    proxy_port: 8091
+
+  - name: "Tel'Abim"
+    icon: 1
+    flags: 0
+    population: 2.0
+    category: 1
+    real_addr: "51.38.75.18:8090"
+    proxy_port: 8092
