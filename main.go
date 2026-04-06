@@ -164,7 +164,7 @@ func pipeServerToClient(src, dst net.Conn, cfg *Config, recv *int64) {
 			}
 
 			patched := buildRealmList(cfg)
-			log.Printf("Replaced realm list: server=%d bytes, ours=%d bytes", total, len(patched))
+			log.Printf("auth  %s realm_list server=%d ours=%d", dst.RemoteAddr(), total, len(patched))
 			dst.Write(patched)
 			buf = buf[total:]
 		}
@@ -201,18 +201,19 @@ func handleWorldConn(client net.Conn, realHost string, realPort int, cfg *Config
 	addr := client.RemoteAddr().(*net.TCPAddr)
 	start := time.Now()
 
-	server, err := newDialer(cfg).Dial("tcp", net.JoinHostPort(realHost, strconv.Itoa(realPort)))
+	upstream := net.JoinHostPort(realHost, strconv.Itoa(realPort))
+	server, err := newDialer(cfg).Dial("tcp", upstream)
 	if err != nil {
-		log.Printf("World  %s: upstream unreachable %s:%d: %v", addr, realHost, realPort, err)
+		log.Printf("world %s unreachable %s: %v", addr, upstream, err)
 		return
 	}
 	defer server.Close()
 
-	log.Printf("World  %s -> %s:%d", addr, realHost, realPort)
+	log.Printf("world %s connected -> %s", addr, upstream)
 	var sent, recv int64
 	biPipe(client, server, &sent, &recv, func(src, dst net.Conn, c *int64) { simplePipe(src, dst, c) })
 
-	log.Printf("World  %s closed sent=%d recv=%d dur=%.1fs",
+	log.Printf("world %s closed sent=%d recv=%d dur=%.1fs",
 		addr, sent, recv, time.Since(start).Seconds())
 }
 
@@ -229,7 +230,7 @@ func startWorldProxy(cfg *Config) error {
 		if err != nil {
 			return fmt.Errorf("world proxy :%d: %w", proxyPort, err)
 		}
-		log.Printf("World  proxy %s:%d -> %s:%d (%s)", cfg.ListenHost, proxyPort, host, realPort, realm.Name)
+		log.Printf("world listen %s -> %s (%s)", net.JoinHostPort(cfg.ListenHost, strconv.Itoa(proxyPort)), net.JoinHostPort(host, strconv.Itoa(realPort)), realm.Name)
 
 		go func(ln net.Listener, h string, p int) {
 			for {
@@ -252,20 +253,20 @@ func handleAuthConn(client net.Conn, cfg *Config) {
 	defer client.Close()
 	addr := client.RemoteAddr().(*net.TCPAddr)
 
-	server, err := newDialer(cfg).Dial("tcp",
-		net.JoinHostPort(cfg.AuthServerHost, strconv.Itoa(cfg.AuthServerPort)))
+	upstream := net.JoinHostPort(cfg.AuthServerHost, strconv.Itoa(cfg.AuthServerPort))
+	server, err := newDialer(cfg).Dial("tcp", upstream)
 	if err != nil {
-		log.Printf("Auth   %s: upstream unreachable: %v", addr, err)
+		log.Printf("auth  %s unreachable %s: %v", addr, upstream, err)
 		return
 	}
 	defer server.Close()
 
-	log.Printf("Auth   %s", addr)
+	log.Printf("auth  %s connected", addr)
 	var sent, recv int64
 	biPipe(client, server, &sent, &recv,
 		func(src, dst net.Conn, c *int64) { pipeServerToClient(src, dst, cfg, c) })
 
-	log.Printf("Auth   %s closed sent=%d recv=%d", addr, sent, recv)
+	log.Printf("auth  %s closed sent=%d recv=%d", addr, sent, recv)
 }
 
 func startAuthProxy(cfg *Config) error {
@@ -273,8 +274,9 @@ func startAuthProxy(cfg *Config) error {
 	if err != nil {
 		return fmt.Errorf("auth proxy :%d: %w", cfg.AuthListenPort, err)
 	}
-	log.Printf("Auth   proxy %s:%d -> %s:%d",
-		cfg.ListenHost, cfg.AuthListenPort, cfg.AuthServerHost, cfg.AuthServerPort)
+	log.Printf("auth  listen %s -> %s",
+		net.JoinHostPort(cfg.ListenHost, strconv.Itoa(cfg.AuthListenPort)),
+		net.JoinHostPort(cfg.AuthServerHost, strconv.Itoa(cfg.AuthServerPort)))
 
 	go func() {
 		for {
@@ -298,6 +300,8 @@ func main() {
 		cfgPath = os.Args[1]
 	}
 
+	log.SetFlags(0)
+
 	cfg, err := loadConfig(cfgPath)
 	if err != nil {
 		log.Fatalf("Config: %v", err)
@@ -309,7 +313,7 @@ func main() {
 		cfg.ProxyIP = cfg.ListenHost
 	}
 
-	log.Printf("Outbound IP: %s", cfg.ProxyIP)
+	log.Printf("outbound %s", cfg.ProxyIP)
 
 	if err := startWorldProxy(cfg); err != nil {
 		log.Fatalf("World proxy: %v", err)
