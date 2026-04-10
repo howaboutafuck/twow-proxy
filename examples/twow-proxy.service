@@ -5,7 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=nobody
+DynamicUser=yes
 ExecStart=/usr/local/bin/twow-proxy /usr/local/etc/twow-proxy/config.yaml
 Restart=on-failure
 RestartSec=5
