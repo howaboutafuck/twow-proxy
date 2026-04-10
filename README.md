@@ -148,7 +148,7 @@ Apr 10 09:54:15 vps-server twow-proxy[103302]: auth  listen 1.2.3.4:3724 -> logo
 
 На данном этапе прокси-сервер работает. Если на сервере используется firewall (рекомендуется), обязательно открыть порты 3724 и с 8090 по 8092 по TCP, либо те порты, которые указаны у Вас в конфиге прокси.
 
-Чтобы посмотреть логи, используем ```journalctl -u twow-proxy.service -f``` (пользователь должен быть в группе ```systemd-journal``` (добавить можно с помощью ```sudo adduser <username> systemd-journal```).
+Чтобы посмотреть логи, используем ```journalctl -u twow-proxy.service -f``` (пользователь должен быть в группе ```systemd-journal```, добавить можно с помощью ```sudo adduser <username> systemd-journal```).
 
 ## Перенаправление Turtle WoW на прокси-сервер
 
