@@ -5,7 +5,7 @@
 // built from config.yaml. All other packets (including 2FA/PIN data in
 // 0x01) are forwarded byte-for-byte without modification.
 //
-// Usage: turtle-proxy [config.yaml]
+// Usage: twow-proxy [config.yaml]
 package main
 
 import (

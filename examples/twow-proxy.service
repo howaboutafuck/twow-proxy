@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=nobody
-ExecStart=/usr/local/bin/turtle-proxy /usr/local/etc/turtle-proxy/config.yaml
+ExecStart=/usr/local/bin/twow-proxy /usr/local/etc/twow-proxy/config.yaml
 Restart=on-failure
 RestartSec=5
 

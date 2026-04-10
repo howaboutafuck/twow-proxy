@@ -1,4 +1,4 @@
-module turtle-proxy
+module twow-proxy
 
 go 1.26.1
 
